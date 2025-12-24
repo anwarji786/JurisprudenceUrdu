@@ -58,7 +58,7 @@ UI_TRANSLATIONS = {
         'show_answer': "Show Answer",
         'next_card': "Next Card",
         'play_answer': "🔊 Play Answer",
-        'answer_audio": "⬇️ Answer Audio",
+        'answer_audio': "⬇️ Answer Audio",
         'combined_qa': "⬇️ Combined Q&A Audio",
         'card_settings': "Card Settings",
         'shuffle_deck': "Shuffle Deck",
