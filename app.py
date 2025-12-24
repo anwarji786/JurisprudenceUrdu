@@ -57,6 +57,43 @@ def t(key):
     lang = st.session_state.get('lang', 'en')
     return texts.get(lang, texts['en']).get(key, key)
 
+# Simple English to Urdu question mapping based on your document
+def create_urdu_question(english_question):
+    """Convert English question to Urdu based on patterns in your document"""
+    if "founder of the Analytical School" in english_question:
+        return "تجزیاتی فقہ کے مدرسہ کا بانی کون سمجھا جاتا ہے؟"
+    elif "Austin's definition of law" in english_question:
+        return "آسٹن کی قانون کی تعریف کیا ہے؟"
+    elif "main features of the Analytical School" in english_question:
+        return "تجزیاتی مدرسہ کی اہم خصوصیات کیا ہیں؟"
+    elif "critics of Austin's theory" in english_question:
+        return "آسٹن کے نظریے کے دو نقادوں کے نام بتائیں۔"
+    elif "Historical School of Jurisprudence" in english_question:
+        return "تاریخی فقہ کا مدرسہ کس چیز سے متعلق ہے؟"
+    elif "father of the Historical School" in english_question:
+        return "تاریخی فقہ کے مدرسہ کا بانی کون سمجھا جاتا ہے؟"
+    elif "Savigny's main argument against codification" in english_question:
+        return "ساوینی نے قانون کی تدوین کے خلاف کیا دلیل دی؟"
+    elif "English jurist is associated with the Historical School" in english_question:
+        return "کون سا انگریز ماہر قانون تاریخی مدرسہ سے وابستہ ہے؟"
+    elif "Maine's famous theory about the evolution of law" in english_question:
+        return "مین کا قانون کی ارتقاء کے بارے میں مشہور نظریہ کیا ہے؟"
+    elif "Compare Analytical and Historical Schools" in english_question:
+        return "تجزیاتی اور تاریخی مدارس کا موازنہ کریں۔"
+    else:
+        # Default: convert common question words to Urdu
+        question = english_question.lower()
+        if "who is" in question:
+            return "کون ہے" + english_question.replace("Who is", "").replace("who is", "") + "؟"
+        elif "what is" in question:
+            return "کیا ہے" + english_question.replace("What is", "").replace("what is", "") + "؟"
+        elif "what are" in question:
+            return "کیا ہیں" + english_question.replace("What are", "").replace("what are", "") + "؟"
+        elif "name" in question:
+            return "نام بتائیں" + english_question.replace("Name", "").replace("name", "") + "؟"
+        else:
+            return "سوال: " + english_question + "؟"
+
 # Load flashcards
 def load_cards():
     try:
@@ -70,9 +107,10 @@ def load_cards():
             
             if text.startswith("Q:"):
                 if q_en and a_en:  # Save previous card
+                    urdu_question = create_urdu_question(q_en)
                     cards.append({
                         'en': (q_en, a_en),
-                        'ur': (f"سوال: {q_en}", a_ur if a_ur else a_en)  # Urdu question is just "سوال: [English]"
+                        'ur': (urdu_question, a_ur if a_ur else a_en)
                     })
                 q_en = text[2:].strip()
                 a_en = None
@@ -86,9 +124,10 @@ def load_cards():
         
         # Add last card
         if q_en and a_en:
+            urdu_question = create_urdu_question(q_en)
             cards.append({
                 'en': (q_en, a_en),
-                'ur': (f"سوال: {q_en}", a_ur if a_ur else a_en)
+                'ur': (urdu_question, a_ur if a_ur else a_en)
             })
         
         return cards
@@ -188,19 +227,27 @@ def show_flashcards():
     q_en, a_en = card['en']
     q_ur, a_ur = card['ur']
     
+    # Debug: Show what's being loaded
+    with st.expander("🔍 Debug Info", expanded=False):
+        st.write(f"**Card {idx + 1}:**")
+        st.write(f"English Q: {q_en}")
+        st.write(f"Urdu Q: {q_ur}")
+        st.write(f"English A: {a_en}")
+        st.write(f"Urdu A: {a_ur}")
+    
     # Show question
     if st.session_state.lang == 'ur':
-        # In Urdu mode, show the question in Urdu format
+        # Show actual Urdu question
         st.subheader(f"{q_ur}")
         if st.session_state.show_urdu:
             st.caption(f"English: {q_en}")
     else:
-        # In English mode, show English question
+        # Show English question
         st.subheader(f"Q: {q_en}")
         if st.session_state.show_urdu:
             st.caption(f"Urdu: {q_ur}")
     
-    # Audio for question - FIXED: For Urdu audio, speak the Urdu answer text (since we don't have Urdu questions)
+    # Audio for question
     st.write("### 🔊 Listen to Question")
     col1, col2 = st.columns(2)
     
@@ -213,11 +260,8 @@ def show_flashcards():
     
     with col2:
         if st.button(t('listen_ur'), key=f"qur{idx}", use_container_width=True):
-            # FIX: For Urdu question audio, we need Urdu content
-            # Since we don't have Urdu questions, we'll create a Urdu question text
-            # by extracting the main topic from the English question
-            urdu_question_text = f"سوال یہ ہے کہ {a_ur}"
-            audio = speak(urdu_question_text, "ur")
+            # Speak the actual Urdu question
+            audio = speak(q_ur, "ur")
             if audio:
                 st.session_state[f"a_qur{idx}"] = audio
                 st.success("Urdu audio ready!")
@@ -231,7 +275,7 @@ def show_flashcards():
         st.write("**Urdu Audio:**")
         st.markdown(audio_player(st.session_state[f"a_qur{idx}"]), unsafe_allow_html=True)
     
-    # Download audio - FIXED for Urdu
+    # Download audio
     st.write("### 📥 Download Audio")
     col1, col2 = st.columns(2)
     with col1:
@@ -244,9 +288,7 @@ def show_flashcards():
     
     with col2:
         if st.button(t('download_ur'), key=f"dlur{idx}", use_container_width=True):
-            # Create proper Urdu question text for download
-            urdu_question_text = f"سوال یہ ہے کہ {a_ur}"
-            audio = speak(urdu_question_text, "ur")
+            audio = speak(q_ur, "ur")
             if audio:
                 b64 = base64.b64encode(audio).decode()
                 st.markdown(f'<a href="data:audio/mp3;base64,{b64}" download="question_{idx+1}_ur.mp3" style="display:none;" id="dl{idx}ur">DL</a><script>document.getElementById("dl{idx}ur").click();</script>', unsafe_allow_html=True)
@@ -346,15 +388,6 @@ def show_settings():
             del st.session_state[key]
         st.success("App reset! Refresh page.")
         st.rerun()
-    
-    with st.expander("About"):
-        st.write("""
-        **LLB Flashcards App**
-        - Study in English and Urdu
-        - Text-to-speech in both languages
-        - Interactive flashcards
-        - For LLB exam preparation
-        """)
 
 if __name__ == "__main__":
     main()
