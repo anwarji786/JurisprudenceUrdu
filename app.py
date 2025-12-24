@@ -14,6 +14,7 @@ import os
 # ====================== PATH HANDLING ======================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 DOC_PATH = os.path.join(current_dir, "Law Preparation.docx")
+
 if not os.path.exists(DOC_PATH):
     possible_paths = [
         DOC_PATH,
@@ -141,70 +142,70 @@ UI_TRANSLATIONS = {
         'load_cards_first': "Please load flashcards first from the Flashcards tab."
     },
     'Urdu': {
-        'app_title': "ایل ایل بی تیاری فلیش کارڈز وائس اوور کے ساتھ",
+        'app_title': "ایل ایل بی تیاری فلش کارڈز آواز کے ساتھ",
         'quiz_title': "ایل ایل بی تیاری کوئز",
-        'bulk_download': "بڑے پیمانے پر آڈیو ڈاؤن لوڈ",
-        'settings': "ایپلیکیشن کی ترتیبات",
-        'flashcards': "فلیش کارڈز",
+        'bulk_download': "بلاک آڈیو ڈاؤن لوڈ",
+        'settings': "اپلیکیشن ترتیبات",
+        'flashcards': "فلش کارڈز",
         'quiz': "کوئز",
-        'download': "بڑے پیمانے پر ڈاؤن لوڈ",
+        'download': "بلاک ڈاؤن لوڈ",
         'settings_tab': "ترتیبات",
         'document_info': "دستاویز کی معلومات",
         'total_cards': "کل کارڈز",
         'sample_question': "نمونہ سوال",
         'currently_playing': "فی الحال آڈیو چل رہا ہے",
         'stop_all_audio': "تمام آڈیو روکیں",
-        'no_audio': "فی حال کوئی آڈیو نہیں چل رہا",
-        'no_flashcards': "کوئی فلیش کارڈز نہیں ملے۔ یقینی بنائیں کہ آپ کا دستاویز Q:/A: لائنز استعمال کرتا ہے۔",
+        'no_audio': "فی الحال کوئی آڈیو نہیں چل رہا",
+        'no_flashcards': "کوئی فلش کارڈ نہیں ملا۔ یقینی بنائیں کہ آپ کی دستاویز Q:/A: لائنز استعمال کرتی ہے۔",
         'expected_format': "متوقع فارمیٹ:",
         'format_example': "Q: قانون کی تعریف کیا ہے؟\nA: قانون اصولوں کا ایک نظام ہے...",
         'play_question': "🔊 سوال سنیں",
         'stop': "⏹️ روکیں",
         'question_audio': "⬇️ سوال آڈیو",
-        'playing_loop': "🔁 سوال کا آڈیو لوپ پر چل رہا ہے...",
+        'playing_loop': "🔁 سوال کی آڈیو لوپ پر چل رہی ہے...",
         'show_answer': "جواب دکھائیں",
         'next_card': "اگلا کارڈ",
         'play_answer': "🔊 جواب سنیں",
         'answer_audio': "⬇️ جواب آڈیو",
-        'combined_qa': "⬇️ مربوط سوال اور جواب آڈیو",
+        'combined_qa': "⬇️ مشترکہ سوال اور جواب آڈیو",
         'card_settings': "کارڈ کی ترتیبات",
-        'shuffle_deck': "کارڈز کو ہلائیں",
-        'quick_navigation': "فوری نیوی گیشن",
+        'shuffle_deck': "کارڈ ملائیں",
+        'quick_navigation': "فوری نیویگیشن",
         'first': "⏮️ پہلا",
         'previous': "⏪ پچھلا",
         'next': "⏩ اگلا",
-        'test_knowledge': "اس انٹرایکٹو کوئز کے ساتھ اپنے علم کا آزمائش کریں!",
-        'cards_available': "کل دستیاب فلیش کارڈز",
+        'test_knowledge': "اس انٹرایکٹو کوئز کے ساتھ اپنے علم کا امتحان لیں!",
+        'cards_available': "کل دستیاب فلش کارڈز",
         'num_questions': "سوالات کی تعداد:",
         'start_quiz': "🚀 کوئز شروع کریں",
         'questions': "سوالات",
-        'progress': "پیشرفت",
-        'select_answer': "درست جواب منتخب کریں:",
-        'correct_answer': "درست جواب:",
+        'progress': "ترقی",
+        'select_answer': "صحیح جواب منتخب کریں:",
+        'correct_answer': "صحیح جواب:",
         'next_question': "➡️ اگلا سوال",
         'choose_answer': "اپنا جواب منتخب کریں:",
         'skip_question': "⏭️ سوال چھوڑیں",
-        'quiz_completed': "🎉 کوئز مکمل ہو گیا!",
+        'quiz_completed': "🎉 کوئز مکمل ہوا!",
         'total_questions': "کل سوالات",
         'correct_answers': "صحیح جوابات",
         'score': "اسکور",
         'excellent': "🏆 شاندار! آپ مواد پر عبور حاصل کر رہے ہیں!",
         'good_job': "👍 اچھا کام! مضبوط سمجھ!",
-        'keep_practicing': "📚 مشق جاری رکھیں! آپ قریب پہنچ گئے ہیں!",
+        'keep_practicing': "📚 مشق جاری رکھیں! آپ قریب ہیں!",
         'review_material': "💪 مواد کا جائزہ لیں اور دوبارہ کوشش کریں!",
-        'retry_quiz': "🔄 کوئز دوبارہ کریں",
+        'retry_quiz': "🔄 کوئز دوبارہ کوشش کریں",
         'new_quiz': "📝 نیا کوئز",
-        'generate_download': "اپنے فلیش کارڈز کے لیے آڈیو فائلیں بنائیں اور ڈاؤن لوڈ کریں",
-        'bulk_note': "⚠️ نوٹ: بڑے پیمانے پر ڈاؤن لوڈ آن ڈیمانڈ آڈیو تیار کرتا ہے اور بڑے سیٹس کے لیے وقت لے سکتا ہے۔",
+        'generate_download': "اپنے فلش کارڈز کے لیے آڈیو فائلیں تیار اور ڈاؤن لوڈ کریں",
+        'bulk_note': "⚠️ نوٹ: بلاک ڈاؤن لوڈ آن ڈیمانڈ آڈیو تیار کرتا ہے اور بڑے سیٹ کے لیے وقت لے سکتا ہے۔",
         'select_type': "ڈاؤن لوڈ کی قسم منتخب کریں:",
         'question_only': "صرف سوال",
         'answer_only': "صرف جواب",
         'question_then_answer': "سوال پھر جواب",
         'generate_package': "🛠️ ڈاؤن لوڈ پیکیج تیار کریں",
         'downloading': "آڈیو فائلیں ڈاؤن لوڈ کریں",
-        'generated_files': "آڈیو فائلیں تیار ہو گئیں!",
-        'zip_info': "زپ فائل MP3 فارمیٹ میں آڈیو فائلیں پر مشتمل ہے۔",
-        'loaded_cards': "فلیش کارڈز لوڈ ہو گئے",
+        'generated_files': "آڈیو فائلیں تیار کی گئیں!",
+        'zip_info': "زیپ فائل میں MP3 فارمیٹ میں آڈیو فائلیں ہیں۔",
+        'loaded_cards': "فلش کارڈز لوڈ ہوئے",
         'no_cards_loaded': "کوئی کارڈ لوڈ نہیں ہوا",
         'document_path': "دستاویز کا راستہ",
         'file_exists': "فائل موجود ہے",
@@ -212,8 +213,8 @@ UI_TRANSLATIONS = {
         'reset_state': "🔄 ایپلیکیشن کی حالت ری سیٹ کریں",
         'about_app': "ℹ️ اس ایپ کے بارے میں",
         'sidebar_title': "📚 ایل ایل بی تیاری",
-        'sidebar_info': "انٹرایکٹو فلیش کارڈز اور وائس سپورٹ کے ساتھ ایل ایل بی مواد کا مطالعہ کریں",
-        'cards_loaded': "کارڈز لوڈ ہو گئے",
+        'sidebar_info': "انٹرایکٹو فلش کارڈز اور آواز کی مدد کے ساتھ ایل ایل بی مواد کا مطالعہ کریں",
+        'cards_loaded': "کارڈز لوڈ ہوئے",
         'made_with': "ایل ایل بی طلباء کے لیے ❤️ کے ساتھ بنایا گیا",
         'language': "🌐 زبان",
         'english': "انگریزی",
@@ -230,11 +231,11 @@ UI_TRANSLATIONS = {
         'listen_english': "🔊 انگریزی میں سنیں",
         'download_urdu': "⬇️ اردو آڈیو",
         'download_english': "⬇️ انگریزی آڈیو",
-        'combined_bilingual': "⬇️ مربوط دو زبانی آڈیو",
+        'combined_bilingual': "⬇️ مشترکہ دو لسانی آڈیو",
         'question_in_urdu': "سوال:",
         'answer_in_urdu': "جواب:",
         'translation_loading': "اردو میں ترجمہ ہو رہا ہے...",
-        'translation_error': "ترجمہ دستیاب نہیں",
+        'translation_error': "ترجمہ دستیاب نہیں ہے",
         'enter_urdu': "اردو ترجمہ درج کریں",
         'manual_translation': "دستی ترجمہ",
         'save_translation': "💾 ترجمہ محفوظ کریں",
@@ -244,8 +245,8 @@ UI_TRANSLATIONS = {
         'switch_to_english': "انگریزی میں تبدیل کریں",
         'current_language': "موجودہ زبان",
         'language_switch': "🌐 زبان تبدیل کریں",
-        'quiz_not_available': "⚠️ کوئز دستیاب نہیں - کوئی فلیش کارڈز لوڈ نہیں ہوئے",
-        'load_cards_first': "براہ کرم پہلے فلیش کارڈز ٹیب سے فلیش کارڈز لوڈ کریں۔"
+        'quiz_not_available': "⚠️ کوئز دستیاب نہیں - کوئی فلش کارڈ لوڈ نہیں ہوئے",
+        'load_cards_first': "براہ کرم پہلے فلش کارڈز ٹیب سے فلش کارڈز لوڈ کریں۔"
     }
 }
 
@@ -255,6 +256,7 @@ def t(key):
         return UI_TRANSLATIONS[lang][key]
     return UI_TRANSLATIONS['English'].get(key, key)
 
+# ✅ CORRECTED: Safe emoji removal
 def remove_emojis(text):
     if not text:
         return ""
@@ -278,32 +280,46 @@ def load_bilingual_flashcards(doc_path):
         english_question = None
         english_answer = None
         urdu_answer = None
+        
         for para in document.paragraphs:
             text = para.text.strip()
             if not text:
                 continue
-            if text.startswith("Q:") and "(Urdu)" not in text:
+                
+            # Look for English questions
+            if text.startswith("Q:"):
+                # Save previous card if exists
                 if english_question and english_answer:
                     cards.append({
                         'english': (english_question, english_answer),
                         'urdu': (f"سوال: {english_question}", urdu_answer if urdu_answer else english_answer)
                     })
+                
+                # Start new card
                 english_question = text[2:].strip()
                 english_answer = None
                 urdu_answer = None
+                
+            # Look for English answers
             elif text.startswith("A:") and "(Urdu)" not in text and english_question:
                 english_answer = text[2:].strip()
-            elif "A" in text and "(Urdu)" in text and english_question and english_answer:
-                urdu_answer = text.split(":", 1)[1].strip() if ":" in text else text.replace("A (Urdu)", "").strip()
+                
+            # Look for Urdu answers
+            elif text.startswith("A (Urdu):") and english_question:
+                urdu_answer = text.split(":", 1)[1].strip() if ":" in text else text.replace("A (Urdu):", "").strip()
+        
+        # Add the last card
         if english_question and english_answer:
             cards.append({
                 'english': (english_question, english_answer),
                 'urdu': (f"سوال: {english_question}", urdu_answer if urdu_answer else english_answer)
             })
+            
         if not cards:
             st.warning(t('no_flashcards'))
             st.info(f"{t('expected_format')}\n```\n{t('format_example')}\n```")
         return cards
+        
     except Exception as e:
         st.error(f"Error reading document: {e}")
         return []
@@ -423,12 +439,12 @@ def show_flashcards():
         else:
             st.session_state.show_urdu = True
         st.markdown("---")
-        with st.expander(t('document_info'), expanded=False):
-            st.write(f"**{t('document_info')}:** Law Preparation.docx")
-            st.write(f"**{t('total_cards')}:** {len(st.session_state.cards) if st.session_state.cards else 0}")
-            if st.session_state.cards:
-                sample_question = st.session_state.cards[0]['english'][0]
-                st.write(f"**{t('sample_question')}:** {sample_question[:50]}...")
+    with st.expander(t('document_info'), expanded=False):
+        st.write(f"**{t('document_info')}:** Law Preparation.docx")
+        st.write(f"**{t('total_cards')}:** {len(st.session_state.cards) if st.session_state.cards else 0}")
+        if st.session_state.cards:
+            sample_question = st.session_state.cards[0]['english'][0]
+            st.write(f"**{t('sample_question')}:** {sample_question[:50]}...")
     with st.sidebar:
         if st.session_state.audio_playing:
             st.warning(f"🔊 {t('currently_playing')}")
@@ -448,7 +464,7 @@ def show_flashcards():
             urdu_question, urdu_answer = card['urdu']
         else:
             urdu_question, urdu_answer = f"سوال: {english_question}", english_answer
-
+        # ✅ Display based on language
         if st.session_state.language == 'Urdu':
             st.subheader(f"{urdu_question}")
             if st.session_state.show_urdu:
@@ -457,7 +473,6 @@ def show_flashcards():
             st.subheader(f"Q: {english_question}")
             if st.session_state.show_urdu:
                 st.markdown(f"*{t('urdu_translation')}: {urdu_question}*")
-
         current_audio_id = f"card_{idx}_question"
         is_playing = st.session_state.audio_playing == current_audio_id
         col1, col2, col3 = st.columns([1, 1, 1])
@@ -482,7 +497,6 @@ def show_flashcards():
                 if st.button(t('stop'), key="stop_question", type="secondary"):
                     stop_audio()
                     st.rerun()
-
         st.markdown("---")
         col1, col2 = st.columns(2)
         with col1:
@@ -507,7 +521,6 @@ def show_flashcards():
                         st.markdown(f'{href}<button style="display:none;" id="download_q_ur_{idx}">Download</button></a>', unsafe_allow_html=True)
                         st.markdown(f'<script>document.getElementById("download_q_ur_{idx}").click();</script>', unsafe_allow_html=True)
                         st.success(f"Download started: {filename}")
-
         if is_playing and not st.session_state.stop_requested:
             audio_bytes = st.session_state.get(f"audio_{current_audio_id}")
             if audio_bytes:
@@ -519,7 +532,6 @@ def show_flashcards():
                 """
                 st.markdown(audio_html, unsafe_allow_html=True)
                 st.success(t('playing_loop'))
-
         if st.session_state.show_answer:
             st.markdown("---")
             if st.session_state.language == 'Urdu':
@@ -530,7 +542,6 @@ def show_flashcards():
                 st.markdown(f"""<div style='color:red; font-size:30px; padding:20px; border-left:5px solid #4CAF50; background-color:#f9f9f9; border-radius:5px; margin:10px 0;'><strong>A:</strong><br>{english_answer}</div>""", unsafe_allow_html=True)
                 if st.session_state.show_urdu:
                     st.markdown(f"*{t('urdu_translation')}: {urdu_answer}*")
-
             current_audio_id_answer = f"card_{idx}_answer"
             is_playing_answer = st.session_state.audio_playing == current_audio_id_answer
             col1, col2, col3 = st.columns([1, 1, 1])
@@ -555,7 +566,6 @@ def show_flashcards():
                     if st.button(t('stop'), key="stop_answer", type="secondary"):
                         stop_audio()
                         st.rerun()
-
             st.markdown("---")
             col1, col2 = st.columns(2)
             with col1:
@@ -580,7 +590,6 @@ def show_flashcards():
                             st.markdown(f'{href}<button style="display:none;" id="download_a_ur_{idx}">Download</button></a>', unsafe_allow_html=True)
                             st.markdown(f'<script>document.getElementById("download_a_ur_{idx}").click();</script>', unsafe_allow_html=True)
                             st.success(f"Download started: {filename}")
-
             st.markdown("---")
             col1, col2 = st.columns(2)
             with col1:
@@ -607,7 +616,6 @@ def show_flashcards():
                             st.markdown(f'{href}<button style="display:none;" id="download_bilingual_{idx}">Download</button></a>', unsafe_allow_html=True)
                             st.markdown(f'<script>document.getElementById("download_bilingual_{idx}").click();</script>', unsafe_allow_html=True)
                             st.success(f"Download started: {filename}")
-
             if is_playing_answer and not st.session_state.stop_requested:
                 audio_bytes = st.session_state.get(f"audio_{current_audio_id_answer}")
                 if audio_bytes:
@@ -619,59 +627,42 @@ def show_flashcards():
                     """
                     st.markdown(audio_html, unsafe_allow_html=True)
                     st.success(t('playing_loop'))
-
-def handle_show_answer():
-    st.session_state.show_answer = True
-
-def handle_next_card():
-    if "order" in st.session_state and st.session_state.order:
-        st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
-    st.session_state.show_answer = False
-    st.session_state.audio_playing = None
-    st.session_state.stop_requested = False
-
-col1, col2 = st.columns(2)
-col1.button(t('show_answer'), on_click=handle_show_answer)
-col2.button(t('next_card'), on_click=handle_next_card)
-
-with st.expander(f"⚙️ {t('card_settings')}"):
-    if st.button(t('shuffle_deck')):
-        if st.session_state.cards:
-            st.session_state.order = list(range(len(st.session_state.cards)))
-            random.shuffle(st.session_state.order)
-            st.session_state.index = 0
+        def handle_show_answer():
+            st.session_state.show_answer = True
+        def handle_next_card():
+            st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
             st.session_state.show_answer = False
             st.session_state.audio_playing = None
             st.session_state.stop_requested = False
-            st.success("Deck shuffled!")
-        else:
-            st.warning("No flashcards to shuffle.")
-    
-    if "order" in st.session_state and st.session_state.order:
-        st.write(f"**{t('card_settings')} {st.session_state.index + 1} of {len(st.session_state.order)}**")
-    else:
-        st.write(f"**{t('card_settings')} — No cards available**")
-
-    st.markdown("---")
-    st.write(f"**{t('quick_navigation')}:**")
-    nav_col1, nav_col2, nav_col3 = st.columns(3)
-    with nav_col1:
-        if st.button(t('first')):
-            if "order" in st.session_state and st.session_state.order:
+        col1, col2 = st.columns(2)
+        col1.button(t('show_answer'), on_click=handle_show_answer)
+        col2.button(t('next_card'), on_click=handle_next_card)
+        with st.expander(f"⚙️ {t('card_settings')}"):
+            if st.button(t('shuffle_deck')):
+                random.shuffle(st.session_state.order)
+                st.session_state.index = 0
+                st.session_state.show_answer = False
+                st.session_state.audio_playing = None
+                st.session_state.stop_requested = False
+                st.success("Deck shuffled!")
+            st.write(f"**{t('card_settings')} {st.session_state.index + 1} of {len(st.session_state.order)}**")
+        st.markdown("---")
+        st.write(f"**{t('quick_navigation')}:**")
+        nav_col1, nav_col2, nav_col3 = st.columns(3)
+        with nav_col1:
+            if st.button(t('first')):
                 st.session_state.index = 0
                 st.session_state.show_answer = False
                 st.session_state.audio_playing = None
                 st.rerun()
-    with nav_col2:
-        if st.button(t('previous')):
-            if "order" in st.session_state and st.session_state.order:
+        with nav_col2:
+            if st.button(t('previous')):
                 st.session_state.index = (st.session_state.index - 1) % len(st.session_state.order)
                 st.session_state.show_answer = False
                 st.session_state.audio_playing = None
                 st.rerun()
-    with nav_col3:
-        if st.button(t('next')):
-            if "order" in st.session_state and st.session_state.order:
+        with nav_col3:
+            if st.button(t('next')):
                 st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
                 st.session_state.show_answer = False
                 st.session_state.audio_playing = None
@@ -700,7 +691,6 @@ def show_quiz():
         st.warning(t('quiz_not_available'))
         st.info(t('load_cards_first'))
         return
-
     if not st.session_state.quiz_started:
         st.write(t('test_knowledge'))
         st.write(f"{t('cards_available')}: {len(st.session_state.cards)}")
@@ -760,7 +750,6 @@ def show_quiz():
                     urdu_question, urdu_answer = card['urdu']
                 else:
                     urdu_question, urdu_answer = f"سوال: {english_question}", english_answer
-
                 question_num = current_index + 1
                 st.subheader(f"{t('questions')} {question_num} of {len(quiz_cards)}")
                 if st.session_state.quiz_language == "Urdu":
@@ -769,7 +758,6 @@ def show_quiz():
                 else:
                     display_question = english_question
                     st.markdown(f'<h3 style="color:#FF0000;">{display_question}</h3>', unsafe_allow_html=True)
-
                 st.write(f"{t('select_answer')}")
                 if current_index in st.session_state.quiz_answers:
                     selected_answer = st.session_state.quiz_answers[current_index]
@@ -797,9 +785,9 @@ def show_quiz():
                     else:
                         if st.session_state.quiz_language == "Urdu":
                             options.extend([
-                                "یہ سیاق و سباق میں لاگو نہیں ہوتا",
+                                "یہ سیاق و سباق میں قابل اطلاق نہیں ہے",
                                 "یہ ایک غلط تشریح ہے",
-                                "اس کے برعکس صحیح ہے"
+                                "اس کا برعکس سچ ہے"
                             ])
                         else:
                             options.extend([
@@ -907,7 +895,6 @@ def show_bulk_download():
     if not st.session_state.cards:
         st.warning("No flashcards available for download.")
         return
-
     download_options = [t('question_only'), t('answer_only'), t('question_then_answer')]
     selected_type = st.selectbox(
         t('select_type'),
@@ -938,7 +925,6 @@ def show_bulk_download():
                                 urdu_question, urdu_answer = card['urdu']
                             else:
                                 urdu_question, urdu_answer = f"سوال: {english_question}", english_answer
-
                             if selected_type == t('question_only'):
                                 if audio_lang == "English":
                                     audio_bytes = text_to_speech(english_question, lang="en")
@@ -1019,7 +1005,7 @@ def show_settings():
                 st.write(f"   **English A:** {english_a[:50]}...")
                 st.write(f"   **Urdu Q:** {urdu_q[:50]}...")
                 st.write(f"   **Urdu A:** {urdu_a[:50]}...")
-            st.write("---")
+                st.write("---")
     with st.expander("🌐 Language Statistics"):
         st.write(f"**{t('current_language')}:** {st.session_state.language}")
         st.write(f"**Show translation:** {'✅ Yes' if st.session_state.show_urdu else '❌ No'}")
@@ -1066,7 +1052,6 @@ def main():
             st.markdown("🇵🇰 **اردو**")
         st.markdown("---")
         st.caption(t('made_with'))
-
     tab1, tab2, tab3, tab4 = st.tabs([f"🎴 {t('flashcards')}", f"📝 {t('quiz')}", f"📥 {t('download')}", f"⚙️ {t('settings_tab')}"])
     with tab1:
         show_flashcards()
