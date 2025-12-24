@@ -519,17 +519,6 @@ def show_flashcards():
                         st.markdown(f'<script>document.getElementById("download_q_ur_{idx}").click();</script>', unsafe_allow_html=True)
                         st.success(f"Download started: {filename}")
 
-        if is_playing and not st.session_state.stop_requested:
-            audio_bytes = st.session_state.get(f"audio_{current_audio_id}")
-            if audio_bytes:
-                audio_html = f"""
-                <audio autoplay loop style="display:none;">
-                <source src="audio/mp3;base64,{base64.b64encode(audio_bytes).decode()}" type="audio/mp3">
-                Your browser does not support the audio element.
-                </audio>
-                """
-                st.markdown(audio_html, unsafe_allow_html=True)
-                st.success(t('playing_loop'))
 
         if st.session_state.show_answer:
             st.markdown("---")
@@ -619,17 +608,6 @@ def show_flashcards():
                             st.markdown(f'<script>document.getElementById("download_bilingual_{idx}").click();</script>', unsafe_allow_html=True)
                             st.success(f"Download started: {filename}")
 
-            if is_playing_answer and not st.session_state.stop_requested:
-                audio_bytes = st.session_state.get(f"audio_{current_audio_id_answer}")
-                if audio_bytes:
-                    audio_html = f"""
-                    <audio autoplay loop style="display:none;">
-                    <source src="audio/mp3;base64,{base64.b64encode(audio_bytes).decode()}" type="audio/mp3">
-                    Your browser does not support the audio element.
-                    </audio>
-                    """
-                    st.markdown(audio_html, unsafe_allow_html=True)
-                    st.success(t('playing_loop'))
 
 def handle_show_answer():
     st.session_state.show_answer = True
