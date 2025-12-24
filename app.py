@@ -624,7 +624,8 @@ def handle_show_answer():
     st.session_state.show_answer = True
 
 def handle_next_card():
-    st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
+    if "order" in st.session_state and st.session_state.order:
+        st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
     st.session_state.show_answer = False
     st.session_state.audio_playing = None
     st.session_state.stop_requested = False
@@ -635,34 +636,46 @@ col2.button(t('next_card'), on_click=handle_next_card)
 
 with st.expander(f"⚙️ {t('card_settings')}"):
     if st.button(t('shuffle_deck')):
-        random.shuffle(st.session_state.order)
-        st.session_state.index = 0
-        st.session_state.show_answer = False
-        st.session_state.audio_playing = None
-        st.session_state.stop_requested = False
-        st.success("Deck shuffled!")
-    st.write(f"**{t('card_settings')} {st.session_state.index + 1} of {len(st.session_state.order)}**")
+        if st.session_state.cards:
+            st.session_state.order = list(range(len(st.session_state.cards)))
+            random.shuffle(st.session_state.order)
+            st.session_state.index = 0
+            st.session_state.show_answer = False
+            st.session_state.audio_playing = None
+            st.session_state.stop_requested = False
+            st.success("Deck shuffled!")
+        else:
+            st.warning("No flashcards to shuffle.")
+    
+    if "order" in st.session_state and st.session_state.order:
+        st.write(f"**{t('card_settings')} {st.session_state.index + 1} of {len(st.session_state.order)}**")
+    else:
+        st.write(f"**{t('card_settings')} — No cards available**")
+
     st.markdown("---")
     st.write(f"**{t('quick_navigation')}:**")
     nav_col1, nav_col2, nav_col3 = st.columns(3)
     with nav_col1:
         if st.button(t('first')):
-            st.session_state.index = 0
-            st.session_state.show_answer = False
-            st.session_state.audio_playing = None
-            st.rerun()
+            if "order" in st.session_state and st.session_state.order:
+                st.session_state.index = 0
+                st.session_state.show_answer = False
+                st.session_state.audio_playing = None
+                st.rerun()
     with nav_col2:
         if st.button(t('previous')):
-            st.session_state.index = (st.session_state.index - 1) % len(st.session_state.order)
-            st.session_state.show_answer = False
-            st.session_state.audio_playing = None
-            st.rerun()
+            if "order" in st.session_state and st.session_state.order:
+                st.session_state.index = (st.session_state.index - 1) % len(st.session_state.order)
+                st.session_state.show_answer = False
+                st.session_state.audio_playing = None
+                st.rerun()
     with nav_col3:
         if st.button(t('next')):
-            st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
-            st.session_state.show_answer = False
-            st.session_state.audio_playing = None
-            st.rerun()
+            if "order" in st.session_state and st.session_state.order:
+                st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
+                st.session_state.show_answer = False
+                st.session_state.audio_playing = None
+                st.rerun()
 
 def show_quiz():
     st.title(t('quiz_title'))
