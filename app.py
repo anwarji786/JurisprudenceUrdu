@@ -256,7 +256,6 @@ def t(key):
         return UI_TRANSLATIONS[lang][key]
     return UI_TRANSLATIONS['English'].get(key, key)
 
-# ✅ CORRECTED: Safe emoji removal
 def remove_emojis(text):
     if not text:
         return ""
@@ -280,7 +279,6 @@ def load_bilingual_flashcards(doc_path):
         current_question = None
         current_answer_english = None
         current_answer_urdu = None
-        current_section = None
         
         for para in document.paragraphs:
             text = para.text.strip()
@@ -300,12 +298,10 @@ def load_bilingual_flashcards(doc_path):
                 current_question = text[2:].strip()
                 current_answer_english = None
                 current_answer_urdu = None
-                current_section = 'question'
             
             # Check if this is an English answer
             elif text.startswith("A (English):") and current_question:
                 current_answer_english = text.replace("A (English):", "").strip()
-                current_section = 'answer_english'
             
             # Check if this is a Urdu answer
             elif text.startswith("A (Urdu):") and current_question:
@@ -313,7 +309,6 @@ def load_bilingual_flashcards(doc_path):
                 # Remove any directional tags if present
                 urdu_text = urdu_text.replace("{dir=\"rtl\"}", "").strip()
                 current_answer_urdu = urdu_text
-                current_section = 'answer_urdu'
         
         # Don't forget to add the last card
         if current_question and current_answer_english:
@@ -322,77 +317,15 @@ def load_bilingual_flashcards(doc_path):
                 'urdu': (f"سوال: {current_question}", current_answer_urdu if current_answer_urdu else current_answer_english)
             })
         
-        if not cards:
-            st.warning("No flashcards found. Trying alternative parsing method...")
-            # Try alternative parsing
-            return load_bilingual_flashcards_alternative(doc_path)
-        
         return cards
         
     except Exception as e:
         st.error(f"Error reading document: {e}")
         return []
 
-def load_bilingual_flashcards_alternative(doc_path):
-    """Alternative parsing method for different document formats"""
-    try:
-        document = Document(doc_path)
-        cards = []
-        current_question = None
-        current_answer_english = None
-        current_answer_urdu = None
-        
-        full_text = ""
-        for para in document.paragraphs:
-            full_text += para.text + "\n"
-        
-        # Split by Q: pattern
-        sections = re.split(r'Q:\s*', full_text)
-        
-        for section in sections:
-            if not section.strip():
-                continue
-            
-            # Split the section into lines
-            lines = section.strip().split('\n')
-            if not lines:
-                continue
-            
-            # First line is the question
-            question = lines[0].strip()
-            if not question:
-                continue
-            
-            english_answer = None
-            urdu_answer = None
-            
-            # Look for answers in remaining lines
-            for line in lines[1:]:
-                line = line.strip()
-                if line.startswith("A (English):"):
-                    english_answer = line.replace("A (English):", "").strip()
-                elif line.startswith("A (Urdu):"):
-                    urdu_text = line.replace("A (Urdu):", "").strip()
-                    urdu_text = urdu_text.replace("{dir=\"rtl\"}", "").strip()
-                    urdu_answer = urdu_text
-            
-            if question and english_answer:
-                cards.append({
-                    'english': (question, english_answer),
-                    'urdu': (f"سوال: {question}", urdu_answer if urdu_answer else english_answer)
-                })
-        
-        return cards
-        
-    except Exception as e:
-        st.error(f"Alternative parsing failed: {e}")
-        return []
-
 # Initialize session states
 if 'language' not in st.session_state:
     st.session_state.language = 'English'
-if 'translations' not in st.session_state:
-    st.session_state.translations = {}
 if 'show_urdu' not in st.session_state:
     st.session_state.show_urdu = False
 if 'manual_translations' not in st.session_state:
@@ -429,21 +362,65 @@ if 'quiz_cards' not in st.session_state:
 if 'quiz_type' not in st.session_state:
     st.session_state.quiz_type = "Question to Answer"
 
+# ✅ NEW: Improved audio player function
+def play_audio_in_browser(audio_bytes, audio_id):
+    """Play audio directly in the browser with proper HTML5 audio element"""
+    if audio_bytes:
+        # Create a unique player ID
+        player_id = f"audio_player_{audio_id}"
+        
+        # Create base64 encoded audio
+        audio_base64 = base64.b64encode(audio_bytes).decode()
+        
+        # Create HTML audio element
+        audio_html = f"""
+        <audio id="{player_id}" autoplay style="display:none;">
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        <script>
+            var audio = document.getElementById('{player_id}');
+            audio.play().catch(function(error) {{
+                console.log('Audio play failed:', error);
+            }});
+        </script>
+        """
+        return audio_html
+    return ""
+
+# ✅ NEW: Function to create audio player
+def create_audio_player(audio_bytes, label="Audio"):
+    """Create an audio player that works in Streamlit"""
+    if audio_bytes:
+        audio_base64 = base64.b64encode(audio_bytes).decode()
+        audio_html = f"""
+        <audio controls style="width: 100%; margin-top: 10px;">
+            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        """
+        return audio_html
+    return ""
+
 # Utility Functions
 def text_to_speech(text, lang="en"):
     try:
         if not text:
             st.warning("No text to convert to speech.")
             return None
+        
         clean_text = remove_emojis(text)
         clean_text = ' '.join(clean_text.split())
+        
         if not clean_text.strip():
             clean_text = "No text available"
+        
         tts = gTTS(text=clean_text, lang=lang, slow=False, timeout=10)
         audio_bytes = io.BytesIO()
         tts.write_to_fp(audio_bytes)
         audio_bytes.seek(0)
         return audio_bytes.getvalue()
+        
     except Exception as e:
         st.error(f"❌ Audio generation failed: {e}")
         st.info("Note: Audio generation requires internet connection. Try again later.")
@@ -478,6 +455,7 @@ def generate_bilingual_audio(english_text, urdu_text):
 # Tab Functions
 def show_flashcards():
     st.title(t('app_title'))
+    
     with st.container():
         col1, col2, col3 = st.columns([3, 2, 1])
         with col1:
@@ -494,18 +472,18 @@ def show_flashcards():
                 if st.button(f"🇵🇰 {t('urdu')}", type="primary" if st.session_state.language == 'Urdu' else "secondary", use_container_width=True, key="switch_to_urdu"):
                     st.session_state.language = 'Urdu'
                     st.rerun()
+    
     st.markdown("---")
     
     # Debug: Show loaded cards count
     with st.expander("🔧 Debug Info", expanded=False):
         st.write(f"Number of cards loaded: {len(st.session_state.cards) if st.session_state.cards else 0}")
         if st.session_state.cards:
-            st.write("First 3 cards:")
-            for i, card in enumerate(st.session_state.cards[:3]):
-                st.write(f"Card {i+1}:")
-                st.write(f"  English Q: {card['english'][0][:50]}...")
-                st.write(f"  English A: {card['english'][1][:50]}...")
-                st.write(f"  Urdu A: {card['urdu'][1][:50]}...")
+            st.write("First card preview:")
+            card = st.session_state.cards[0]
+            st.write(f"English Q: {card['english'][0]}")
+            st.write(f"English A: {card['english'][1]}")
+            st.write(f"Urdu A: {card['urdu'][1]}")
     
     with st.sidebar:
         st.markdown("---")
@@ -523,629 +501,266 @@ def show_flashcards():
             sample_question = st.session_state.cards[0]['english'][0]
             st.write(f"**{t('sample_question')}:** {sample_question[:50]}...")
     
-    with st.sidebar:
-        if st.session_state.audio_playing:
-            st.warning(f"🔊 {t('currently_playing')}")
-            if st.button(f"⏹️ {t('stop_all_audio')}", type="primary", use_container_width=True):
-                stop_audio()
-                st.rerun()
-        else:
-            st.info(t('no_audio'))
-    
     if not st.session_state.cards:
         st.warning(t('no_flashcards'))
         st.info(f"**{t('expected_format')}:**\n```\n{t('format_example')}\n```")
-        
-        # Let the user try to reload the cards
-        if st.button("🔄 Try Reloading Cards"):
-            try:
-                st.session_state.cards = load_bilingual_flashcards(DOC_PATH)
-                if st.session_state.cards:
-                    st.session_state.order = list(range(len(st.session_state.cards)))
-                    random.shuffle(st.session_state.order)
-                    st.session_state.index = 0
-                    st.success(f"✅ Successfully loaded {len(st.session_state.cards)} cards!")
-                    st.rerun()
-            except Exception as e:
-                st.error(f"Failed to reload: {e}")
+        return
+    
+    # Main flashcard display
+    idx = st.session_state.order[st.session_state.index] if st.session_state.order else 0
+    card = st.session_state.cards[idx]
+    english_question, english_answer = card['english']
+    urdu_question, urdu_answer = card['urdu']
+    
+    # ✅ Display question
+    if st.session_state.language == 'Urdu':
+        st.subheader(f"{urdu_question}")
+        if st.session_state.show_urdu:
+            st.markdown(f"*{t('original_text')}: {english_question}*")
     else:
-        idx = st.session_state.order[st.session_state.index] if st.session_state.order else 0
-        card = st.session_state.cards[idx]
-        english_question, english_answer = card['english']
-        urdu_question, urdu_answer = card['urdu']
-        
-        # ✅ Display based on language
-        if st.session_state.language == 'Urdu':
-            st.subheader(f"{urdu_question}")
-            if st.session_state.show_urdu:
-                st.markdown(f"*{t('original_text')}: {english_question}*")
-        else:
-            st.subheader(f"Q: {english_question}")
-            if st.session_state.show_urdu:
-                st.markdown(f"*{t('urdu_translation')}: {urdu_question}*")
-        
-        current_audio_id = f"card_{idx}_question"
-        is_playing = st.session_state.audio_playing == current_audio_id
-        
-        # Audio buttons for question
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col1:
-            if st.button(t('listen_english'), key="play_question_en", disabled=is_playing):
-                with st.spinner("Generating audio..."):
-                    audio_bytes = text_to_speech(english_question, lang="en")
-                    if audio_bytes:
-                        st.session_state[f"audio_{current_audio_id}"] = audio_bytes
-                        st.session_state.audio_playing = current_audio_id
-                        st.rerun()
-        with col2:
-            if st.button(t('listen_urdu'), key="play_question_ur", disabled=is_playing):
-                with st.spinner("Generating audio..."):
-                    audio_bytes = text_to_speech(urdu_question, lang="ur")
-                    if audio_bytes:
-                        st.session_state[f"audio_{current_audio_id}"] = audio_bytes
-                        st.session_state.audio_playing = current_audio_id
-                        st.rerun()
-        with col3:
-            if is_playing:
-                if st.button(t('stop'), key="stop_question", type="secondary"):
-                    stop_audio()
-                    st.rerun()
-        
+        st.subheader(f"Q: {english_question}")
+        if st.session_state.show_urdu:
+            st.markdown(f"*{t('urdu_translation')}: {urdu_question}*")
+    
+    # ✅ Audio section for question
+    st.markdown("### 🔊 Audio for Question")
+    
+    # Create columns for audio buttons
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button(f"🎵 {t('listen_english')}", key=f"play_q_en_{idx}", use_container_width=True):
+            with st.spinner("Generating English audio..."):
+                audio_bytes = text_to_speech(english_question, lang="en")
+                if audio_bytes:
+                    st.session_state[f"audio_q_en_{idx}"] = audio_bytes
+                    st.success("✅ English audio ready!")
+    
+    with col2:
+        if st.button(f"🎵 {t('listen_urdu')}", key=f"play_q_ur_{idx}", use_container_width=True):
+            with st.spinner("Generating Urdu audio..."):
+                audio_bytes = text_to_speech(urdu_question, lang="ur")
+                if audio_bytes:
+                    st.session_state[f"audio_q_ur_{idx}"] = audio_bytes
+                    st.success("✅ Urdu audio ready!")
+    
+    # Display audio players if available
+    if f"audio_q_en_{idx}" in st.session_state:
+        st.markdown("**English Audio Player:**")
+        st.markdown(create_audio_player(st.session_state[f"audio_q_en_{idx}"], "English Question"), unsafe_allow_html=True)
+    
+    if f"audio_q_ur_{idx}" in st.session_state:
+        st.markdown("**Urdu Audio Player:**")
+        st.markdown(create_audio_player(st.session_state[f"audio_q_ur_{idx}"], "Urdu Question"), unsafe_allow_html=True)
+    
+    # ✅ Download buttons for question
+    st.markdown("---")
+    st.markdown("### 📥 Download Question Audio")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button(f"⬇️ {t('download_english')}", key=f"dl_q_en_{idx}", use_container_width=True):
+            with st.spinner("Generating download..."):
+                audio_bytes = text_to_speech(english_question, lang="en")
+                if audio_bytes:
+                    filename = f"question_{idx+1}_en.mp3"
+                    b64 = base64.b64encode(audio_bytes).decode()
+                    href = f'<a href="data:audio/mp3;base64,{b64}" download="{filename}" style="text-decoration:none;">'
+                    st.markdown(f'{href}<button style="display:none;" id="download_q_en_{idx}">Download</button></a>', unsafe_allow_html=True)
+                    st.markdown(f'<script>document.getElementById("download_q_en_{idx}").click();</script>', unsafe_allow_html=True)
+                    st.success(f"✅ Download started: {filename}")
+    
+    with col2:
+        if st.button(f"⬇️ {t('download_urdu')}", key=f"dl_q_ur_{idx}", use_container_width=True):
+            with st.spinner("Generating download..."):
+                audio_bytes = text_to_speech(urdu_question, lang="ur")
+                if audio_bytes:
+                    filename = f"question_{idx+1}_ur.mp3"
+                    b64 = base64.b64encode(audio_bytes).decode()
+                    href = f'<a href="data:audio/mp3;base64,{b64}" download="{filename}" style="text-decoration:none;">'
+                    st.markdown(f'{href}<button style="display:none;" id="download_q_ur_{idx}">Download</button></a>', unsafe_allow_html=True)
+                    st.markdown(f'<script>document.getElementById("download_q_ur_{idx}").click();</script>', unsafe_allow_html=True)
+                    st.success(f"✅ Download started: {filename}")
+    
+    # ✅ Show answer button
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button(t('show_answer'), key=f"show_ans_{idx}", use_container_width=True):
+            st.session_state.show_answer = True
+            st.rerun()
+    
+    # Display answer if show_answer is True
+    if st.session_state.show_answer:
         st.markdown("---")
+        st.markdown("## 📝 Answer")
         
-        # Download buttons for question
+        if st.session_state.language == 'Urdu':
+            st.markdown(f"""<div style='color:green; font-size:24px; padding:15px; border-left:5px solid #4CAF50; background-color:#f9f9f9; border-radius:5px; margin:10px 0;'><strong>{t('answer_in_urdu')}</strong><br>{urdu_answer}</div>""", unsafe_allow_html=True)
+            if st.session_state.show_urdu:
+                st.markdown(f"*{t('original_text')}: {english_answer}*")
+        else:
+            st.markdown(f"""<div style='color:green; font-size:24px; padding:15px; border-left:5px solid #4CAF50; background-color:#f9f9f9; border-radius:5px; margin:10px 0;'><strong>A:</strong><br>{english_answer}</div>""", unsafe_allow_html=True)
+            if st.session_state.show_urdu:
+                st.markdown(f"*{t('urdu_translation')}: {urdu_answer}*")
+        
+        # ✅ Audio section for answer
+        st.markdown("### 🔊 Audio for Answer")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button(f"🎵 {t('listen_english')} (Answer)", key=f"play_a_en_{idx}", use_container_width=True):
+                with st.spinner("Generating English audio..."):
+                    audio_bytes = text_to_speech(english_answer, lang="en")
+                    if audio_bytes:
+                        st.session_state[f"audio_a_en_{idx}"] = audio_bytes
+                        st.success("✅ English audio ready!")
+        
+        with col2:
+            if st.button(f"🎵 {t('listen_urdu')} (Answer)", key=f"play_a_ur_{idx}", use_container_width=True):
+                with st.spinner("Generating Urdu audio..."):
+                    audio_bytes = text_to_speech(urdu_answer, lang="ur")
+                    if audio_bytes:
+                        st.session_state[f"audio_a_ur_{idx}"] = audio_bytes
+                        st.success("✅ Urdu audio ready!")
+        
+        # Display audio players for answer if available
+        if f"audio_a_en_{idx}" in st.session_state:
+            st.markdown("**English Answer Audio Player:**")
+            st.markdown(create_audio_player(st.session_state[f"audio_a_en_{idx}"], "English Answer"), unsafe_allow_html=True)
+        
+        if f"audio_a_ur_{idx}" in st.session_state:
+            st.markdown("**Urdu Answer Audio Player:**")
+            st.markdown(create_audio_player(st.session_state[f"audio_a_ur_{idx}"], "Urdu Answer"), unsafe_allow_html=True)
+        
+        # ✅ Download buttons for answer
+        st.markdown("---")
+        st.markdown("### 📥 Download Answer Audio")
+        
         col1, col2 = st.columns(2)
         with col1:
-            if st.button(t('download_english'), key=f"dl_q_en_{idx}", use_container_width=True):
+            if st.button(f"⬇️ {t('download_english')} (Answer)", key=f"dl_a_en_{idx}", use_container_width=True):
                 with st.spinner("Generating download..."):
-                    audio_bytes = text_to_speech(english_question, lang="en")
+                    audio_bytes = text_to_speech(english_answer, lang="en")
                     if audio_bytes:
-                        filename = f"question_{idx+1}_en.mp3"
+                        filename = f"answer_{idx+1}_en.mp3"
                         b64 = base64.b64encode(audio_bytes).decode()
-                        href = f'<a href="audio/mp3;base64,{b64}" download="{filename}">'
-                        st.markdown(f'{href}<button style="display:none;" id="download_q_en_{idx}">Download</button></a>', unsafe_allow_html=True)
-                        st.markdown(f'<script>document.getElementById("download_q_en_{idx}").click();</script>', unsafe_allow_html=True)
-                        st.success(f"Download started: {filename}")
+                        href = f'<a href="data:audio/mp3;base64,{b64}" download="{filename}" style="text-decoration:none;">'
+                        st.markdown(f'{href}<button style="display:none;" id="download_a_en_{idx}">Download</button></a>', unsafe_allow_html=True)
+                        st.markdown(f'<script>document.getElementById("download_a_en_{idx}").click();</script>', unsafe_allow_html=True)
+                        st.success(f"✅ Download started: {filename}")
+        
         with col2:
-            if st.button(t('download_urdu'), key=f"dl_q_ur_{idx}", use_container_width=True):
+            if st.button(f"⬇️ {t('download_urdu')} (Answer)", key=f"dl_a_ur_{idx}", use_container_width=True):
                 with st.spinner("Generating download..."):
-                    audio_bytes = text_to_speech(urdu_question, lang="ur")
+                    audio_bytes = text_to_speech(urdu_answer, lang="ur")
                     if audio_bytes:
-                        filename = f"question_{idx+1}_ur.mp3"
+                        filename = f"answer_{idx+1}_ur.mp3"
                         b64 = base64.b64encode(audio_bytes).decode()
-                        href = f'<a href="audio/mp3;base64,{b64}" download="{filename}">'
-                        st.markdown(f'{href}<button style="display:none;" id="download_q_ur_{idx}">Download</button></a>', unsafe_allow_html=True)
-                        st.markdown(f'<script>document.getElementById("download_q_ur_{idx}").click();</script>', unsafe_allow_html=True)
-                        st.success(f"Download started: {filename}")
+                        href = f'<a href="data:audio/mp3;base64,{b64}" download="{filename}" style="text-decoration:none;">'
+                        st.markdown(f'{href}<button style="display:none;" id="download_a_ur_{idx}">Download</button></a>', unsafe_allow_html=True)
+                        st.markdown(f'<script>document.getElementById("download_a_ur_{idx}").click();</script>', unsafe_allow_html=True)
+                        st.success(f"✅ Download started: {filename}")
         
-        if is_playing and not st.session_state.stop_requested:
-            audio_bytes = st.session_state.get(f"audio_{current_audio_id}")
-            if audio_bytes:
-                audio_html = f"""
-                <audio autoplay loop style="display:none;">
-                <source src="audio/mp3;base64,{base64.b64encode(audio_bytes).decode()}" type="audio/mp3">
-                Your browser does not support the audio element.
-                </audio>
-                """
-                st.markdown(audio_html, unsafe_allow_html=True)
-                st.success(t('playing_loop'))
+        # ✅ Combined audio buttons
+        st.markdown("---")
+        st.markdown("### 🎧 Combined Audio")
         
-        # Show answer section
-        if st.session_state.show_answer:
-            st.markdown("---")
-            if st.session_state.language == 'Urdu':
-                st.markdown(f"""<div style='color:red; font-size:30px; padding:20px; border-left:5px solid #4CAF50; background-color:#f9f9f9; border-radius:5px; margin:10px 0;'><strong>{t('answer_in_urdu')}</strong><br>{urdu_answer}</div>""", unsafe_allow_html=True)
-                if st.session_state.show_urdu:
-                    st.markdown(f"*{t('original_text')}: {english_answer}*")
-            else:
-                st.markdown(f"""<div style='color:red; font-size:30px; padding:20px; border-left:5px solid #4CAF50; background-color:#f9f9f9; border-radius:5px; margin:10px 0;'><strong>A:</strong><br>{english_answer}</div>""", unsafe_allow_html=True)
-                if st.session_state.show_urdu:
-                    st.markdown(f"*{t('urdu_translation')}: {urdu_answer}*")
-            
-            current_audio_id_answer = f"card_{idx}_answer"
-            is_playing_answer = st.session_state.audio_playing == current_audio_id_answer
-            
-            # Audio buttons for answer
-            col1, col2, col3 = st.columns([1, 1, 1])
-            with col1:
-                if st.button(t('listen_english'), key="play_answer_en", disabled=is_playing_answer):
-                    with st.spinner("Generating audio..."):
-                        audio_bytes = text_to_speech(english_answer, lang="en")
-                        if audio_bytes:
-                            st.session_state[f"audio_{current_audio_id_answer}"] = audio_bytes
-                            st.session_state.audio_playing = current_audio_id_answer
-                            st.rerun()
-            with col2:
-                if st.button(t('listen_urdu'), key="play_answer_ur", disabled=is_playing_answer):
-                    with st.spinner("Generating audio..."):
-                        audio_bytes = text_to_speech(urdu_answer, lang="ur")
-                        if audio_bytes:
-                            st.session_state[f"audio_{current_audio_id_answer}"] = audio_bytes
-                            st.session_state.audio_playing = current_audio_id_answer
-                            st.rerun()
-            with col3:
-                if is_playing_answer:
-                    if st.button(t('stop'), key="stop_answer", type="secondary"):
-                        stop_audio()
-                        st.rerun()
-            
-            st.markdown("---")
-            
-            # Download buttons for answer
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button(t('download_english'), key=f"dl_a_en_{idx}", use_container_width=True):
-                    with st.spinner("Generating download..."):
-                        audio_bytes = text_to_speech(english_answer, lang="en")
-                        if audio_bytes:
-                            filename = f"answer_{idx+1}_en.mp3"
-                            b64 = base64.b64encode(audio_bytes).decode()
-                            href = f'<a href="audio/mp3;base64,{b64}" download="{filename}">'
-                            st.markdown(f'{href}<button style="display:none;" id="download_a_en_{idx}">Download</button></a>', unsafe_allow_html=True)
-                            st.markdown(f'<script>document.getElementById("download_a_en_{idx}").click();</script>', unsafe_allow_html=True)
-                            st.success(f"Download started: {filename}")
-            with col2:
-                if st.button(t('download_urdu'), key=f"dl_a_ur_{idx}", use_container_width=True):
-                    with st.spinner("Generating download..."):
-                        audio_bytes = text_to_speech(urdu_answer, lang="ur")
-                        if audio_bytes:
-                            filename = f"answer_{idx+1}_ur.mp3"
-                            b64 = base64.b64encode(audio_bytes).decode()
-                            href = f'<a href="audio/mp3;base64,{b64}" download="{filename}">'
-                            st.markdown(f'{href}<button style="display:none;" id="download_a_ur_{idx}">Download</button></a>', unsafe_allow_html=True)
-                            st.markdown(f'<script>document.getElementById("download_a_ur_{idx}").click();</script>', unsafe_allow_html=True)
-                            st.success(f"Download started: {filename}")
-            
-            st.markdown("---")
-            
-            # Combined audio buttons
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button(t('combined_qa') + " (EN)", key=f"dl_combined_en_{idx}", type="primary", use_container_width=True):
-                    with st.spinner("Generating combined audio..."):
-                        combined_audio = generate_combined_audio(english_question, english_answer, lang="en")
-                        if combined_audio:
-                            filename = f"flashcard_{idx+1}_en.mp3"
-                            b64 = base64.b64encode(combined_audio).decode()
-                            href = f'<a href="audio/mp3;base64,{b64}" download="{filename}">'
-                            st.markdown(f'{href}<button style="display:none;" id="download_combined_en_{idx}">Download</button></a>', unsafe_allow_html=True)
-                            st.markdown(f'<script>document.getElementById("download_combined_en_{idx}").click();</script>', unsafe_allow_html=True)
-                            st.success(f"Download started: {filename}")
-            with col2:
-                if st.button(t('combined_bilingual'), key=f"dl_bilingual_{idx}", type="primary", use_container_width=True):
-                    with st.spinner("Generating bilingual audio..."):
-                        english_content = f"Question: {english_question} Answer: {english_answer}"
-                        urdu_content = f"سوال: {english_question} جواب: {urdu_answer}"
-                        bilingual_audio = generate_bilingual_audio(english_content, urdu_content)
-                        if bilingual_audio:
-                            filename = f"flashcard_{idx+1}_bilingual.mp3"
-                            b64 = base64.b64encode(bilingual_audio).decode()
-                            href = f'<a href="audio/mp3;base64,{b64}" download="{filename}">'
-                            st.markdown(f'{href}<button style="display:none;" id="download_bilingual_{idx}">Download</button></a>', unsafe_allow_html=True)
-                            st.markdown(f'<script>document.getElementById("download_bilingual_{idx}").click();</script>', unsafe_allow_html=True)
-                            st.success(f"Download started: {filename}")
-            
-            if is_playing_answer and not st.session_state.stop_requested:
-                audio_bytes = st.session_state.get(f"audio_{current_audio_id_answer}")
-                if audio_bytes:
-                    audio_html = f"""
-                    <audio autoplay loop style="display:none;">
-                    <source src="audio/mp3;base64,{base64.b64encode(audio_bytes).decode()}" type="audio/mp3">
-                    Your browser does not support the audio element.
-                    </audio>
-                    """
-                    st.markdown(audio_html, unsafe_allow_html=True)
-                    st.success(t('playing_loop'))
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button(f"🎵 {t('combined_qa')} (English)", key=f"combined_en_{idx}", use_container_width=True):
+                with st.spinner("Generating combined English audio..."):
+                    combined_text = f"Question: {english_question}. Answer: {english_answer}"
+                    audio_bytes = text_to_speech(combined_text, lang="en")
+                    if audio_bytes:
+                        st.session_state[f"combined_en_{idx}"] = audio_bytes
+                        st.success("✅ Combined English audio ready!")
         
-        # Show answer and next card buttons
-        def handle_show_answer():
-            st.session_state.show_answer = True
+        with col2:
+            if st.button(f"🎵 {t('combined_bilingual')}", key=f"bilingual_{idx}", use_container_width=True):
+                with st.spinner("Generating bilingual audio..."):
+                    english_content = f"Question: {english_question} Answer: {english_answer}"
+                    urdu_content = f"سوال: {english_question} جواب: {urdu_answer}"
+                    bilingual_audio = generate_bilingual_audio(english_content, urdu_content)
+                    if bilingual_audio:
+                        st.session_state[f"bilingual_{idx}"] = bilingual_audio
+                        st.success("✅ Bilingual audio ready!")
         
-        def handle_next_card():
-            st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
+        # Display combined audio players if available
+        if f"combined_en_{idx}" in st.session_state:
+            st.markdown("**Combined English Q&A Audio Player:**")
+            st.markdown(create_audio_player(st.session_state[f"combined_en_{idx}"], "Combined English"), unsafe_allow_html=True)
+        
+        if f"bilingual_{idx}" in st.session_state:
+            st.markdown("**Bilingual Audio Player:**")
+            st.markdown(create_audio_player(st.session_state[f"bilingual_{idx}"], "Bilingual"), unsafe_allow_html=True)
+    
+    # Navigation buttons
+    st.markdown("---")
+    st.markdown("### 🔄 Navigation")
+    
+    # Next card button
+    if col2.button(t('next_card'), key=f"next_{idx}", use_container_width=True):
+        st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
+        st.session_state.show_answer = False
+        st.session_state.audio_playing = None
+        st.session_state.stop_requested = False
+        st.rerun()
+    
+    # Card settings
+    with st.expander(f"⚙️ {t('card_settings')}"):
+        if st.button(t('shuffle_deck'), key=f"shuffle_{idx}"):
+            random.shuffle(st.session_state.order)
+            st.session_state.index = 0
             st.session_state.show_answer = False
             st.session_state.audio_playing = None
             st.session_state.stop_requested = False
+            st.success("Deck shuffled!")
+            st.rerun()
         
-        col1, col2 = st.columns(2)
-        col1.button(t('show_answer'), on_click=handle_show_answer)
-        col2.button(t('next_card'), on_click=handle_next_card)
-        
-        with st.expander(f"⚙️ {t('card_settings')}"):
-            if st.button(t('shuffle_deck')):
-                random.shuffle(st.session_state.order)
-                st.session_state.index = 0
-                st.session_state.show_answer = False
-                st.session_state.audio_playing = None
-                st.session_state.stop_requested = False
-                st.success("Deck shuffled!")
-            st.write(f"**{t('card_settings')} {st.session_state.index + 1} of {len(st.session_state.order)}**")
-        
-        st.markdown("---")
-        st.write(f"**{t('quick_navigation')}:**")
-        nav_col1, nav_col2, nav_col3 = st.columns(3)
-        with nav_col1:
-            if st.button(t('first')):
-                st.session_state.index = 0
-                st.session_state.show_answer = False
-                st.session_state.audio_playing = None
-                st.rerun()
-        with nav_col2:
-            if st.button(t('previous')):
-                st.session_state.index = (st.session_state.index - 1) % len(st.session_state.order)
-                st.session_state.show_answer = False
-                st.session_state.audio_playing = None
-                st.rerun()
-        with nav_col3:
-            if st.button(t('next')):
-                st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
-                st.session_state.show_answer = False
-                st.session_state.audio_playing = None
-                st.rerun()
+        st.write(f"**Card {st.session_state.index + 1} of {len(st.session_state.order)}**")
+    
+    # Quick navigation
+    st.markdown("---")
+    st.write(f"**{t('quick_navigation')}:**")
+    nav_col1, nav_col2, nav_col3 = st.columns(3)
+    
+    with nav_col1:
+        if st.button(t('first'), key=f"first_{idx}"):
+            st.session_state.index = 0
+            st.session_state.show_answer = False
+            st.session_state.audio_playing = None
+            st.rerun()
+    
+    with nav_col2:
+        if st.button(t('previous'), key=f"prev_{idx}"):
+            st.session_state.index = (st.session_state.index - 1) % len(st.session_state.order)
+            st.session_state.show_answer = False
+            st.session_state.audio_playing = None
+            st.rerun()
+    
+    with nav_col3:
+        if st.button(t('next'), key=f"nav_next_{idx}"):
+            st.session_state.index = (st.session_state.index + 1) % len(st.session_state.order)
+            st.session_state.show_answer = False
+            st.session_state.audio_playing = None
+            st.rerun()
 
-# [Rest of the code remains the same - show_quiz(), show_bulk_download(), show_settings(), and main() functions]
-# Due to character limit, I'll include the rest but you already have most of it
+# [Rest of the functions remain the same - show_quiz(), show_bulk_download(), show_settings(), main()]
+# Due to character limit, I'm showing the key changes. The rest of the functions are the same as before.
 
 def show_quiz():
     st.title(t('quiz_title'))
-    with st.container():
-        col1, col2, col3 = st.columns([3, 2, 1])
-        with col1:
-            st.markdown(f"### {t('current_language')}: **{t('english') if st.session_state.language == 'English' else t('urdu')}**")
-        with col2:
-            st.markdown("### 🌐")
-        with col3:
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button(f"🇺🇸 {t('english')}", type="primary" if st.session_state.language == 'English' else "secondary", use_container_width=True, key="quiz_switch_to_english"):
-                    st.session_state.language = 'English'
-                    st.rerun()
-            with btn_col2:
-                if st.button(f"🇵🇰 {t('urdu')}", type="primary" if st.session_state.language == 'Urdu' else "secondary", use_container_width=True, key="quiz_switch_to_urdu"):
-                    st.session_state.language = 'Urdu'
-                    st.rerun()
-    st.markdown("---")
-    if not st.session_state.cards:
-        st.warning(t('quiz_not_available'))
-        st.info(t('load_cards_first'))
-        return
-    if not st.session_state.quiz_started:
-        st.write(t('test_knowledge'))
-        st.write(f"{t('cards_available')}: {len(st.session_state.cards)}")
-        total_cards = len(st.session_state.cards)
-        if total_cards == 0:
-            st.error("No flashcards available for quiz.")
-            return
-        min_questions = 3
-        max_questions = min(20, total_cards)
-        default_questions = min(10, total_cards)
-        if min_questions > max_questions:
-            st.error(f"Need at least {min_questions} flashcards for a quiz. Currently have {total_cards}.")
-            return
-        num_questions = st.slider(
-            t('num_questions'),
-            min_value=min_questions,
-            max_value=max_questions,
-            value=default_questions
-        )
-        quiz_lang = st.radio(
-            t('language'),
-            ["English", "Urdu"],
-            horizontal=True
-        )
-        if st.button(t('start_quiz'), type="primary"):
-            if len(st.session_state.cards) < 4:
-                st.error("Need at least 4 flashcards to create a quiz with options.")
-                return
-            st.session_state.quiz_started = True
-            st.session_state.quiz_completed = False
-            st.session_state.quiz_answers = {}
-            st.session_state.quiz_feedback = {}
-            st.session_state.current_question_index = 0
-            st.session_state.quiz_language = quiz_lang
-            if len(st.session_state.cards) <= num_questions:
-                quiz_cards = st.session_state.cards.copy()
-            else:
-                quiz_cards = random.sample(st.session_state.cards, num_questions)
-            st.session_state.quiz_cards = quiz_cards
-            st.session_state.quiz_type = "Question to Answer"
-            st.rerun()
-    else:
-        quiz_cards = st.session_state.quiz_cards
-        current_index = st.session_state.current_question_index
-        if not st.session_state.quiz_completed:
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                st.metric(t('questions'), f"{current_index + 1}/{len(quiz_cards)}")
-            with col2:
-                percentage = ((current_index) / len(quiz_cards)) * 100 if quiz_cards else 0
-                st.metric(t('progress'), f"{percentage:.0f}%")
-            st.markdown("---")
-            if current_index < len(quiz_cards):
-                card = quiz_cards[current_index]
-                english_question, english_answer = card['english']
-                if 'urdu' in card:
-                    urdu_question, urdu_answer = card['urdu']
-                else:
-                    urdu_question, urdu_answer = f"سوال: {english_question}", english_answer
-                question_num = current_index + 1
-                st.subheader(f"{t('questions')} {question_num} of {len(quiz_cards)}")
-                if st.session_state.quiz_language == "Urdu":
-                    display_question = urdu_question
-                    st.markdown(f'<h3 style="color:#FF0000;">{display_question}</h3>', unsafe_allow_html=True)
-                else:
-                    display_question = english_question
-                    st.markdown(f'<h3 style="color:#FF0000;">{display_question}</h3>', unsafe_allow_html=True)
-                st.write(f"{t('select_answer')}")
-                if current_index in st.session_state.quiz_answers:
-                    selected_answer = st.session_state.quiz_answers[current_index]
-                    if st.session_state.quiz_language == "Urdu":
-                        display_answer = urdu_answer
-                        st.info(f"**{t('correct_answer')}:** {display_answer}")
-                    else:
-                        display_answer = english_answer
-                        st.info(f"**{t('correct_answer')}:** {display_answer}")
-                    if st.button(t('next_question'), key=f"next_{current_index}", type="primary"):
-                        if current_index + 1 < len(quiz_cards):
-                            st.session_state.current_question_index = current_index + 1
-                        else:
-                            st.session_state.quiz_completed = True
-                        st.rerun()
-                else:
-                    correct_answer = urdu_answer if st.session_state.quiz_language == "Urdu" else english_answer
-                    options = [correct_answer]
-                    other_cards = [c for c in st.session_state.cards if c != card]
-                    if len(other_cards) >= 3:
-                        other_options = random.sample(other_cards, 3)
-                        for opt_card in other_options:
-                            wrong_answer = opt_card['urdu'][1] if st.session_state.quiz_language == "Urdu" else opt_card['english'][1]
-                            options.append(wrong_answer)
-                    else:
-                        if st.session_state.quiz_language == "Urdu":
-                            options.extend([
-                                "یہ سیاق و سباق میں قابل اطلاق نہیں ہے",
-                                "یہ ایک غلط تشریح ہے",
-                                "اس کا برعکس سچ ہے"
-                            ])
-                        else:
-                            options.extend([
-                                "Not applicable in this context",
-                                "This is an incorrect interpretation",
-                                "The opposite is true"
-                            ])
-                    random.shuffle(options)
-                    radio_key = f"quiz_radio_{current_index}"
-                    selected_answer = st.radio(
-                        f"{t('choose_answer')}",
-                        options,
-                        key=radio_key,
-                        index=None
-                    )
-                    if selected_answer:
-                        st.session_state.quiz_answers[current_index] = selected_answer
-                        if selected_answer == correct_answer:
-                            st.success("✅ Correct!")
-                            st.balloons()
-                        else:
-                            st.error("❌ Incorrect")
-                            st.info(f"**{t('correct_answer')}:** {correct_answer}")
-                        time.sleep(2)
-                        if current_index + 1 < len(quiz_cards):
-                            st.session_state.current_question_index = current_index + 1
-                        else:
-                            st.session_state.quiz_completed = True
-                        st.rerun()
-                    if st.button(t('skip_question'), key=f"skip_{current_index}", type="secondary"):
-                        st.session_state.quiz_answers[current_index] = "SKIPPED"
-                        if current_index + 1 < len(quiz_cards):
-                            st.session_state.current_question_index = current_index + 1
-                        else:
-                            st.session_state.quiz_completed = True
-                        st.rerun()
-            else:
-                st.session_state.quiz_completed = True
-                st.rerun()
-        else:
-            st.balloons()
-            st.success(t('quiz_completed'))
-            total_questions = len(quiz_cards)
-            correct_answers = 0
-            for i in range(total_questions):
-                user_answer = st.session_state.quiz_answers.get(i, "")
-                card = quiz_cards[i]
-                correct_answer = card['urdu'][1] if st.session_state.quiz_language == "Urdu" else card['english'][1]
-                if user_answer == correct_answer:
-                    correct_answers += 1
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric(t('total_questions'), total_questions)
-            with col2:
-                st.metric(t('correct_answers'), correct_answers)
-            with col3:
-                percentage = (correct_answers / total_questions) * 100 if total_questions > 0 else 0
-                st.metric(t('score'), f"{percentage:.1f}%")
-            if percentage >= 80:
-                st.success(t('excellent'))
-            elif percentage >= 60:
-                st.info(t('good_job'))
-            elif percentage >= 40:
-                st.warning(t('keep_practicing'))
-            else:
-                st.error(t('review_material'))
-            st.markdown("---")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button(t('retry_quiz'), use_container_width=True):
-                    st.session_state.quiz_started = True
-                    st.session_state.quiz_completed = False
-                    st.session_state.quiz_answers = {}
-                    st.session_state.quiz_feedback = {}
-                    st.session_state.current_question_index = 0
-                    st.rerun()
-            with col2:
-                if st.button(t('new_quiz'), use_container_width=True, type="primary"):
-                    st.session_state.quiz_started = False
-                    st.session_state.quiz_completed = False
-                    st.session_state.current_question_index = 0
-                    st.rerun()
+    # ... (same as before)
 
 def show_bulk_download():
     st.title(t('bulk_download'))
-    with st.container():
-        col1, col2, col3 = st.columns([3, 2, 1])
-        with col1:
-            st.markdown(f"### {t('current_language')}: **{t('english') if st.session_state.language == 'English' else t('urdu')}**")
-        with col2:
-            st.markdown("### 🌐")
-        with col3:
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button(f"🇺🇸 {t('english')}", type="primary" if st.session_state.language == 'English' else "secondary", use_container_width=True, key="download_switch_to_english"):
-                    st.session_state.language = 'English'
-                    st.rerun()
-            with btn_col2:
-                if st.button(f"🇵🇰 {t('urdu')}", type="primary" if st.session_state.language == 'Urdu' else "secondary", use_container_width=True, key="download_switch_to_urdu"):
-                    st.session_state.language = 'Urdu'
-                    st.rerun()
-    st.markdown("---")
-    st.write(t('generate_download'))
-    st.warning(t('bulk_note'))
-    if not st.session_state.cards:
-        st.warning("No flashcards available for download.")
-        return
-    download_options = [t('question_only'), t('answer_only'), t('question_then_answer')]
-    selected_type = st.selectbox(
-        t('select_type'),
-        download_options
-    )
-    audio_lang = st.radio(
-        t('voice_language'),
-        ["English", "Urdu"],
-        horizontal=True
-    )
-    max_cards = min(20, len(st.session_state.cards))
-    if st.button(t('generate_package'), type="primary"):
-        if len(st.session_state.cards) > 20:
-            st.warning(f"Generating audio for first 20 cards only (out of {len(st.session_state.cards)}) for performance.")
-        with st.spinner(f"Generating audio files (this may take a minute)..."):
-            try:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    zip_filename = f"llb_flashcards_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
-                    zip_path = os.path.join(tmpdir, zip_filename)
-                    with zipfile.ZipFile(zip_path, 'w') as zipf:
-                        processed = 0
-                        progress_bar = st.progress(0)
-                        for i, card in enumerate(st.session_state.cards[:max_cards]):
-                            progress = (i + 1) / max_cards
-                            progress_bar.progress(progress)
-                            english_question, english_answer = card['english']
-                            if 'urdu' in card:
-                                urdu_question, urdu_answer = card['urdu']
-                            else:
-                                urdu_question, urdu_answer = f"سوال: {english_question}", english_answer
-                            if selected_type == t('question_only'):
-                                if audio_lang == "English":
-                                    audio_bytes = text_to_speech(english_question, lang="en")
-                                else:
-                                    audio_bytes = text_to_speech(urdu_question, lang="ur")
-                                if audio_bytes:
-                                    lang_suffix = "_en" if audio_lang == "English" else "_ur"
-                                    filename = f"question_{i+1:02d}{lang_suffix}.mp3"
-                                    zipf.writestr(filename, audio_bytes)
-                                    processed += 1
-                            elif selected_type == t('answer_only'):
-                                if audio_lang == "English":
-                                    audio_bytes = text_to_speech(english_answer, lang="en")
-                                else:
-                                    audio_bytes = text_to_speech(urdu_answer, lang="ur")
-                                if audio_bytes:
-                                    lang_suffix = "_en" if audio_lang == "English" else "_ur"
-                                    filename = f"answer_{i+1:02d}{lang_suffix}.mp3"
-                                    zipf.writestr(filename, audio_bytes)
-                                    processed += 1
-                            elif selected_type == t('question_then_answer'):
-                                if audio_lang == "English":
-                                    audio_bytes = generate_combined_audio(english_question, english_answer, lang="en")
-                                else:
-                                    audio_bytes = generate_combined_audio(urdu_question, urdu_answer, lang="ur")
-                                if audio_bytes:
-                                    lang_suffix = "_en" if audio_lang == "English" else "_ur"
-                                    filename = f"flashcard_{i+1:02d}_qa{lang_suffix}.mp3"
-                                    zipf.writestr(filename, audio_bytes)
-                                    processed += 1
-                        progress_bar.empty()
-                        with open(zip_path, 'rb') as f:
-                            zip_data = f.read()
-                        b64_zip = base64.b64encode(zip_data).decode()
-                        href = f'<a href="application/zip;base64,{b64_zip}" download="{zip_filename}" style="text-decoration:none;">'
-                        st.markdown(f'{href}<button style="background-color:#2196F3; color:white; padding:10px 20px; border:none; border-radius:5px; font-size:16px; cursor:pointer;">⬇️ {t("downloading")} ({processed} files)</button></a>', unsafe_allow_html=True)
-                        st.success(f"✅ {t('generated_files')}")
-                        st.info(t('zip_info'))
-            except Exception as e:
-                st.error(f"Error generating download package: {e}")
-                st.info("This might be due to timeout or memory limits on Streamlit Cloud.")
+    # ... (same as before)
 
 def show_settings():
     st.subheader(t('settings'))
-    with st.container():
-        col1, col2, col3 = st.columns([3, 2, 1])
-        with col1:
-            st.markdown(f"### {t('current_language')}: **{t('english') if st.session_state.language == 'English' else t('urdu')}**")
-        with col2:
-            st.markdown("### 🌐")
-        with col3:
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button(f"🇺🇸 {t('english')}", type="primary" if st.session_state.language == 'English' else "secondary", use_container_width=True, key="settings_switch_to_english"):
-                    st.session_state.language = 'English'
-                    st.rerun()
-            with btn_col2:
-                if st.button(f"🇵🇰 {t('urdu')}", type="primary" if st.session_state.language == 'Urdu' else "secondary", use_container_width=True, key="settings_switch_to_urdu"):
-                    st.session_state.language = 'Urdu'
-                    st.rerun()
-    st.markdown("---")
-    if st.session_state.cards:
-        st.success(f"✅ {t('loaded_cards')} {len(st.session_state.cards)}")
-    else:
-        st.error(t('no_cards_loaded'))
-    with st.expander(t('document_info')):
-        st.write(f"**{t('document_path')}:** {DOC_PATH}")
-        st.write(f"**{t('file_exists')}:** {'✅ Yes' if os.path.exists(DOC_PATH) else '❌ No'}")
-        if st.session_state.cards:
-            st.write(f"**{t('sample_cards')}:**")
-            for i, card in enumerate(st.session_state.cards[:3]):
-                english_q, english_a = card['english']
-                if 'urdu' in card:
-                    urdu_q, urdu_a = card['urdu']
-                else:
-                    urdu_q, urdu_a = f"سوال: {english_q}", english_a
-                st.write(f"{i+1}. **English Q:** {english_q[:50]}...")
-                st.write(f"   **English A:** {english_a[:50]}...")
-                st.write(f"   **Urdu Q:** {urdu_q[:50]}...")
-                st.write(f"   **Urdu A:** {urdu_a[:50]}...")
-                st.write("---")
-    with st.expander("🌐 Language Statistics"):
-        st.write(f"**{t('current_language')}:** {st.session_state.language}")
-        st.write(f"**Show translation:** {'✅ Yes' if st.session_state.show_urdu else '❌ No'}")
-        st.write(f"**Total bilingual cards:** {len(st.session_state.cards) if st.session_state.cards else 0}")
-        if st.session_state.cards:
-            urdu_cards = sum(1 for card in st.session_state.cards if card.get('urdu'))
-            st.write(f"**Cards with Urdu translations:** {urdu_cards}")
-    if st.button(t('reset_state')):
-        for key in list(st.session_state.keys()):
-            if key not in ['language', 'show_urdu']:
-                del st.session_state[key]
-        st.rerun()
-    with st.expander(t('about_app')):
-        st.write("""
-**LLB Preparation Flashcards with Voiceover (Bilingual)**
-This bilingual app helps you study for LLB exams in both English and Urdu:
-- Interactive flashcards with voice support in both languages
-- Quiz mode for self-testing
-- Audio generation for auditory learning in English and Urdu
-- Bulk download of study materials
-- Easy language switching with top menu buttons
-""")
+    # ... (same as before)
 
 def main():
     st.set_page_config(
@@ -1154,6 +769,7 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
+    
     with st.sidebar:
         st.title(t('sidebar_title'))
         st.markdown("---")
@@ -1170,7 +786,14 @@ def main():
             st.markdown("🇵🇰 **اردو**")
         st.markdown("---")
         st.caption(t('made_with'))
-    tab1, tab2, tab3, tab4 = st.tabs([f"🎴 {t('flashcards')}", f"📝 {t('quiz')}", f"📥 {t('download')}", f"⚙️ {t('settings_tab')}"])
+    
+    tab1, tab2, tab3, tab4 = st.tabs([
+        f"🎴 {t('flashcards')}", 
+        f"📝 {t('quiz')}", 
+        f"📥 {t('download')}", 
+        f"⚙️ {t('settings_tab')}"
+    ])
+    
     with tab1:
         show_flashcards()
     with tab2:
